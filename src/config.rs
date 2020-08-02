@@ -9,6 +9,7 @@ use crate::constants::DC_VERSION_STR;
 use crate::context::Context;
 use crate::dc_tools::*;
 use crate::events::Event;
+use crate::job;
 use crate::message::MsgId;
 use crate::mimefactory::RECOMMENDED_FILE_SIZE;
 use crate::stock::StockMessage;
@@ -230,6 +231,11 @@ impl Context {
                     msg_id: MsgId::new(0),
                     chat_id: ChatId::new(0),
                 });
+                ret
+            }
+            Config::DeleteServerAfter => {
+                let ret = self.sql.set_raw_config(self, key, value).await;
+                job::schedule_resync(self).await;
                 ret
             }
             _ => self.sql.set_raw_config(self, key, value).await,
